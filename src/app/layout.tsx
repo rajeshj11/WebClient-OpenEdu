@@ -55,7 +55,7 @@ export default function RootLayout({
           <>
             <NavBar />
             <Toaster />
-            <div className="flex justify-center items-center mb-5">
+            <div className="flex justify-center items-center mb-5 pt-20">
               {children}
             </div>
             <Footer />

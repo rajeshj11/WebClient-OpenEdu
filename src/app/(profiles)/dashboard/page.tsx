@@ -59,7 +59,7 @@ const Page: React.FC = () => {
                 authorization,
                 user_id: userId,
               },
-              // credentials: 'include',
+              credentials: 'include',
             },
           );
           const response: UserProfileApiReq = await res.json();
@@ -68,7 +68,7 @@ const Page: React.FC = () => {
           console.log(response.message);
           if (response.status != 200) {
             toast({
-              title: response.status.toString(),
+              title: response?.status.toString(),
               description: response.message,
               variant: 'destructive',
             });

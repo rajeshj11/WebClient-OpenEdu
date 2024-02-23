@@ -21,18 +21,15 @@ import {
   CardTitle,
   CardDescription,
   CardContent,
-  CardFooter,
 } from '@/components/ui/card';
 import { UserProfile } from '@/interfaces/dashboard';
 import { storeValues } from '@/scripts/check-user-auth';
+import { useSearchParams } from "next/navigation";
 
-const profileFormSchema = z.object({
-  email: z
-    .string({
-      required_error: 'Please select an email to display.',
-    })
-    .email(),
-  password: z
+
+const resetFormSchema = z.object({
+    code: z.string(),
+    password: z
     .string()
     .min(8, {
       message: 'Password must be at least 8 characters.',
@@ -42,34 +39,32 @@ const profileFormSchema = z.object({
     }),
 });
 
-type ProfileFormValues = z.infer<typeof profileFormSchema>;
+type ResetFormValues = z.infer<typeof resetFormSchema>;
 
-interface SignInResponse {
+interface Response {
   status: number;
   message: string;
-  data: UserProfile;
 }
-const SignIn = () => {
-  const form = useForm<ProfileFormValues>({
-    resolver: zodResolver(profileFormSchema),
+const Reset = () => {
+  const searchParams = useSearchParams();
+  const email = searchParams.get('email') ?? '' 
+  const form = useForm<ResetFormValues>({
+    resolver: zodResolver(resetFormSchema),
     mode: 'onChange',
   });
 
-  async function onSubmit(data: ProfileFormValues) {
+  async function onSubmit({code, password}: ResetFormValues) {
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_SERVER_URL}/auth/signin`,
+        `${process.env.NEXT_PUBLIC_SERVER_URL}/auth/password/forgot/confirm/${email}`,
         {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(data),
-          credentials: 'include',
+            'Content-Type': 'application/json'          },
+          body: JSON.stringify({code, newPassword: password}),
         },
       );
-      const response: SignInResponse = await res.json();
-
+      const response:Response  = await res.json();
       if (response.status >= 400 && response.status <= 500) {
         toast({
           title: response.status.toString(),
@@ -79,22 +74,9 @@ const SignIn = () => {
         });
         return;
       } else if (response.status === 200) {
-        const user: UserProfile = response.data;
-        if (process.browser) {
-          const valueStored = storeValues(user, false);
-          if (valueStored) {
-            window.location.href = `${process.env.NEXT_PUBLIC_CLIENT_URL}/dashboard`;
-          } else {
-            toast({
-              title: 'Error',
-              description: 'Unable to store values',
-            });
-            return;
-          }
           toast({
             title: response.message,
           });
-        }
       }
     } catch {
       toast({
@@ -107,26 +89,22 @@ const SignIn = () => {
   return (
     <Card className=" lg:w-8/12 md:w-8/12 sm:w-8/12">
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl">Login</CardTitle>
+        <CardTitle className="text-2xl">Forgot Password</CardTitle>
         <CardDescription>
-          Enter your email below to Log into your account
+          Enter your email below to Reset the
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
+          <FormField
               control={form.control}
-              name="email"
+              name="code"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel>Verification Code</FormLabel>
                   <FormControl>
-                    <Input
-                      type="email"
-                      placeholder="OpenEdu@Example.com"
-                      {...field}
-                    />
+                    <Input  id="code" type="text" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -139,34 +117,18 @@ const SignIn = () => {
                 <FormItem>
                   <FormLabel>Password</FormLabel>
                   <FormControl>
-                    <Input type="password" {...field} />
+                    <Input  id="password" type="password" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <div className='flex justify-between'>
-              <Button type="submit">Sign In</Button>
-              <Link href={'/password-reset/send-email'}>
-                <Button variant={'ghost'}>forgot password</Button>
-              </Link>
-            </div>
+            <Button type="submit">Reset</Button>
           </form>
-        </Form> 
+        </Form>
       </CardContent>
-      <CardFooter>
-        <div>
-          <p>
-            Don&apos;t have an account.
-            <Button variant={'link'} className=" text-[16px]">
-              {' '}
-              <Link href={'/signup'}>Register</Link>
-            </Button>
-          </p>
-        </div>
-      </CardFooter>
     </Card>
   );
 };
 
-export default SignIn;
+export default Reset;
