@@ -25,7 +25,8 @@ import {
 import { UserProfile } from '@/interfaces/dashboard';
 import { storeValues } from '@/scripts/check-user-auth';
 import { useSearchParams } from "next/navigation";
-
+import { Loader2Icon } from 'lucide-react';
+import { useState } from 'react';
 
 const resetFormSchema = z.object({
     code: z.string(),
@@ -47,6 +48,7 @@ interface Response {
 }
 const Reset = () => {
   const searchParams = useSearchParams();
+  const [loading, setLoading] = useState(false);
   const email = searchParams.get('email') ?? '' 
   const form = useForm<ResetFormValues>({
     resolver: zodResolver(resetFormSchema),
@@ -55,6 +57,7 @@ const Reset = () => {
 
   async function onSubmit({code, password}: ResetFormValues) {
     try {
+      setLoading(true);
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_SERVER_URL}/auth/password/forgot/confirm/${email}`,
         {
@@ -83,6 +86,8 @@ const Reset = () => {
         title: 'ERROR: 500',
         description: 'Something Went Wrong. Try again later',
       });
+    }finally{
+        setLoading(false);
     }
   }
 
@@ -98,6 +103,7 @@ const Reset = () => {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           <FormField
+              disabled = {loading}
               control={form.control}
               name="code"
               render={({ field }) => (
@@ -112,6 +118,7 @@ const Reset = () => {
             />
             <FormField
               control={form.control}
+              disabled = {loading}
               name="password"
               render={({ field }) => (
                 <FormItem>
@@ -123,7 +130,7 @@ const Reset = () => {
                 </FormItem>
               )}
             />
-            <Button type="submit">Reset</Button>
+            <Button disabled = {loading} type="submit">Reset {loading && <Loader2Icon className=" animate-spin" />}</Button>
           </form>
         </Form>
       </CardContent>

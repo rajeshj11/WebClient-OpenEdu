@@ -23,6 +23,9 @@ import {
   CardContent,
 } from '@/components/ui/card';
 import { useRouter } from "next/navigation";
+import { Loader2Icon } from 'lucide-react';
+import { useState } from 'react';
+
 
 const resetFormSchema = z.object({
   email: z
@@ -40,6 +43,7 @@ interface Response {
 }
 const SendResetMail = () => {
   const router = useRouter();
+  const [loading, setLoading] = useState(false);
   const form = useForm<ResetFormValues>({
     resolver: zodResolver(resetFormSchema),
     mode: 'onChange',
@@ -47,6 +51,7 @@ const SendResetMail = () => {
 
   async function onSubmit({email:userEmail}: ResetFormValues) {
     try {
+      setLoading(true);
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_SERVER_URL}/auth/password/forgot`,
         {
@@ -78,6 +83,8 @@ const SendResetMail = () => {
         title: 'ERROR: 500',
         description: 'Something Went Wrong. Try again later',
       });
+    }finally{
+      setLoading(false);
     }
   }
 
@@ -93,6 +100,7 @@ const SendResetMail = () => {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
+              disabled = {loading}
               control={form.control}
               name="email"
               render={({ field }) => (
@@ -109,7 +117,7 @@ const SendResetMail = () => {
                 </FormItem>
               )}
             />
-            <Button type="submit">Submit</Button>
+            <Button disabled={loading} type="submit">Submit {loading && <Loader2Icon className=" animate-spin" />}</Button>
           </form>
         </Form>
       </CardContent>
